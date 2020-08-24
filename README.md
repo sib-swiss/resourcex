@@ -1,2 +1,2 @@
 # resourcex
-Extension of opal's resourcer package
+Extension of obiba's resourcer package
