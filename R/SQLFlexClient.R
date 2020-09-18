@@ -1,3 +1,4 @@
+#' SQL database resource client
 #'
 #' Resource client that connects to a SQL database supported by DBI.
 #'
