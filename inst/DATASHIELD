@@ -1,0 +1,4 @@
+AssignMethods:
+  as.resource.data.frame,
+  as.resource.object,
+  as.resource.tbl
