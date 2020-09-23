@@ -1,20 +1,12 @@
-var resourcer = {
+var resourcex = {
   settings: {
-    "title": "Base Resources",
-    "description": "Provides some of the most common resources: file, mysql, mariadb, postgresql, mongodb, ssh, scp.",
-    "web": "https://github.com/obiba/resourcer",
-    "categories": [
-      {
-        "name": "database",
-        "title": "Database",
-        "description": "Data are stored in a database."
-      },
-    ],
+    "title": "SQLFlexClient",
+    "description": "Provides a queryable SQL client ",
     "types": [
       {
         "name": "sql",
         "title": "SQL query",
-        "description": "Resource is a connection to a database accessible using [DBI](https://www.r-dbi.org) against which SQL queries can be executed. The data can be read as a standard `data.frame` or as a [dbplyr](https://dbplyr.tidyverse.org/)'s `tbl`.",
+        "description": "Resource provides a connection to a database accessible using [DBI](https://www.r-dbi.org) against which SQL queries can be executed.",
         "tags": ["database"],
         "parameters": {
           "$schema": "http://json-schema.org/schema#",
@@ -58,15 +50,9 @@ var resourcer = {
               "title": "Database",
               "description": "The database name."
             },
-            {
-              "key": "table",
-              "type": "string",
-              "title": "Table",
-              "description": "The table name."
-            }
           ],
           "required": [
-            "driver", "host", "port", "db", "table"
+            "driver", "host", "port", "db"
           ]
         },
         "credentials": {
@@ -92,7 +78,7 @@ var resourcer = {
             "username", "password"
           ]
         }
-      },
+      }
     ]
   },
   asResource: function(type, name, params, credentials) {
@@ -103,4 +89,5 @@ var resourcer = {
               identity: credentials.username,
               secret: credentials.password
           }
+}
 }

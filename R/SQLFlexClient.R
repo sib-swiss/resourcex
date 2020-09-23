@@ -1,9 +1,9 @@
 #' SQL database resource client
 #'
-#' Resource client that connects to a SQL database supported by DBI.
+#' Resource client that connects to a SQL database supported by DBI
 #'
 #' @docType class
-#' @format A R6 object of class SQLResourceClient
+#' @format A R6 object of class SQLFlexClient
 #' @import R6
 #' @import resourcer
 #' @export
@@ -11,7 +11,6 @@ SQLFlexClient <- R6::R6Class(
   "SQLFlexClient",
   inherit = ResourceClient,
   public = list(
-    
     #' @description Creates a SQLResourceClient from a resource.
     #' @param resource The resource object.
     #' @param dbi.connector An optional DBIResourceConnector object. If not provided, it will be looked up in the DBIResourceConnector registry.
@@ -27,43 +26,16 @@ SQLFlexClient <- R6::R6Class(
         stop("DBI resource connector cannot be found: either provide one or register one.")
       }
     },
-    
-    #' @description Get or create the DBI connection object that will access the resource.
-    #' @return The DBI connection object.
-    getConnection = function() {
-      conn <- super$getConnection()
-      if (is.null(conn)) {
-        resource <- super$getResource()
-        conn <- private$.dbi.connector$createDBIConnection(resource)
-        super$setConnection(conn)
-      }
-      conn
+    #' @description Execute a query in the database and retrieve the results.
+    #' @param sqltext a character, the query text
+    #' @param ... Additional parameters to dbGetQuery.
+    #' @return A data.frame 
+    readQuery = function(sqltext, ...) {
+      conn <- self$getConnection()
+      DBI::dbGetQuery(conn, sqltext, ...)
     },
     
-    #' @description Coerce the SQL table to a data.frame.
-    #' @param ... Additional parameters (not used).
-    #' @return A data.frame (more specifically a tibble).
-    asDataFrame = function(...) {
-      private$asTable(FALSE)
-    },
-    
-    #' @description Get the SQL table as a dplyr's tbl.
-    #' @return A dplyr's tbl object.
-    asTbl = function() {
-      private$asTable(TRUE)
-    },
-    
-    #' @description Get the SQL table name from the resource URL.
-    #' @return The SQL table name.
-    getTableName = function() {
-      url <- super$parseURL()
-      if (is.null(url$path)) {
-        NULL
-      } else {
-        basename(url$path)
-      }
-    },
-    
+  
     #' @description Silently close the DBI connection.
     close = function() {
       conn <- super$getConnection()
@@ -76,38 +48,32 @@ SQLFlexClient <- R6::R6Class(
   ),
   private = list(
     .dbi.connector = NULL,
-    # use.dplyr means returning a "table" convenient for dplyr processing
-    asTable = function(use.dplyr = FALSE) {
-      conn <- self$getConnection()
-      tableName <- self$getTableName()
-      if (is.null(tableName)) {
-        stop("No table defined", call. = FALSE)
-      } else {
-        private$readTable(tableName, use.dplyr)
+    getConnection = function() {
+      conn <- super$getConnection()
+      if (is.null(conn)) {
+        resource <- super$getResource()
+        conn <- private$.dbi.connector$createDBIConnection(resource)
+        super$setConnection(conn)
       }
-    },
-    readTable = function(table, use.dplyr) {
-      conn <- self$getConnection()
-      if (!use.dplyr) {
-        private$loadTibble()
-        tibble::as_tibble(DBI::dbReadTable(conn, table))
-      } else {
-        private$loadDBPlyr()
-        dplyr::tbl(conn, table)
-      }
-    },
-    loadTibble = function() {
-      if (!require("tibble")) {
-        install.packages("tibble", repos = "https://cloud.r-project.org", dependencies = TRUE)
-      }
-    },
-    loadDBPlyr = function() {
-      if (!require("dplyr")) {
-        install.packages("dplyr", repos = "https://cloud.r-project.org", dependencies = TRUE)
-      }
-      if (!require("dbplyr")) {
-        install.packages("dbplyr", repos = "https://cloud.r-project.org", dependencies = TRUE)
-      }
+      conn
     }
+    
   )
 )
+
+#' @title Load the result of a query from a database
+#' @description Call the readQuery method of a SQLFlexClient object and retrieve the results.
+#' @param x a SQLFlexClient object
+#' @param sqltext a character, the query text
+#' @param ... Additional parameters to dbGetQuery.
+#' @return A data.frame 
+#' @import dsSwissKnife
+#'@export
+loadQuery <- function(x,sqltext, ...){
+  sqltext <- dsSwissKnife:::.decode.arg(sqltext)
+  if ("SQLFlexClient" %in% class(x)) {
+    return(x$readQuery(sqltext, ...))
+  } else {
+    stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
+  }
+}

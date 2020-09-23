@@ -1,4 +1,4 @@
-Package: resourcer
+Package: resourcex
 Type: Package
 Title: Extra Resource Resolver
 Version: 1.1.0
@@ -10,8 +10,11 @@ Authors@R:
 Description: Extension to Obiba's resourcer package. Adds free query SQL client. 
 License: LGPL (>= 2.1)
 LazyData: true
+AssignMethods:
+    loadQuery
 Depends:
-    resourcer
+    resourcer,
+    dsSwissKnife
 Suggests: 
     testthat,
     knitr,
@@ -30,5 +33,5 @@ Suggests:
     RPresto,
     nodbi,
     rmarkdown
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Encoding: UTF-8
