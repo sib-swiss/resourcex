@@ -2,6 +2,7 @@ var resourcex = {
   settings: {
     "title": "SQLFlexClient",
     "description": "Provides a queryable SQL client ",
+    "web": "https://github.com/IulianD/resourcex",
     "types": [
       {
         "name": "sql",

@@ -11,14 +11,14 @@ SQLFlexClient <- R6::R6Class(
   "SQLFlexClient",
   inherit = ResourceClient,
   public = list(
-    #' @description Creates a SQLResourceClient from a resource.
+    #' @description Creates a SQLFlexClient from a resource.
     #' @param resource The resource object.
     #' @param dbi.connector An optional DBIResourceConnector object. If not provided, it will be looked up in the DBIResourceConnector registry.
     #' @return The SQLResourceClient object.
     initialize = function(resource, dbi.connector = NULL) {
       super$initialize(resource)
       if (is.null(dbi.connector)) {
-        private$.dbi.connector <- findDBIResourceConnector(resource)
+        private$.dbi.connector <- resourcer::findDBIResourceConnector(resource)
       } else {
         private$.dbi.connector <- dbi.connector
       }
@@ -26,12 +26,26 @@ SQLFlexClient <- R6::R6Class(
         stop("DBI resource connector cannot be found: either provide one or register one.")
       }
     },
+    
+    #' @description Get or create the DBI connection object that will access the resource.
+    #' @return The DBI connection object.
+    getConnection = function() {
+      conn <- super$getConnection()
+      if (is.null(conn)) {
+        resource <- super$getResource()
+        conn <- private$.dbi.connector$createDBIConnection(resource)
+        super$setConnection(conn)
+      }
+      conn
+    },
+    
     #' @description Execute a query in the database and retrieve the results.
     #' @param sqltext a character, the query text
     #' @param ... Additional parameters to dbGetQuery.
     #' @return A data.frame 
     readQuery = function(sqltext, ...) {
       conn <- self$getConnection()
+
       DBI::dbGetQuery(conn, sqltext, ...)
     },
     
@@ -47,16 +61,7 @@ SQLFlexClient <- R6::R6Class(
     
   ),
   private = list(
-    .dbi.connector = NULL,
-    getConnection = function() {
-      conn <- super$getConnection()
-      if (is.null(conn)) {
-        resource <- super$getResource()
-        conn <- private$.dbi.connector$createDBIConnection(resource)
-        super$setConnection(conn)
-      }
-      conn
-    }
+    .dbi.connector = NULL
     
   )
 )
@@ -77,3 +82,6 @@ loadQuery <- function(x,sqltext, ...){
     stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
   }
 }
+
+
+

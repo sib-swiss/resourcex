@@ -22,19 +22,19 @@ Resource client that connects to a SQL database supported by DBI
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{SQLFlexClient$new()}}
+\item \href{#method-getConnection}{\code{SQLFlexClient$getConnection()}}
 \item \href{#method-readQuery}{\code{SQLFlexClient$readQuery()}}
 \item \href{#method-close}{\code{SQLFlexClient$close()}}
 \item \href{#method-clone}{\code{SQLFlexClient$clone()}}
 }
 }
 \if{html}{
-\out{<details ><summary>Inherited methods</summary>}
+\out{<details open ><summary>Inherited methods</summary>}
 \itemize{
 \item \out{<span class="pkg-link" data-pkg="resourcer" data-topic="ResourceClient" data-id="asDataFrame">}\href{../../resourcer/html/ResourceClient.html#method-asDataFrame}{\code{resourcer::ResourceClient$asDataFrame()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="resourcer" data-topic="ResourceClient" data-id="asTbl">}\href{../../resourcer/html/ResourceClient.html#method-asTbl}{\code{resourcer::ResourceClient$asTbl()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="resourcer" data-topic="ResourceClient" data-id="downloadFile">}\href{../../resourcer/html/ResourceClient.html#method-downloadFile}{\code{resourcer::ResourceClient$downloadFile()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="resourcer" data-topic="ResourceClient" data-id="exec">}\href{../../resourcer/html/ResourceClient.html#method-exec}{\code{resourcer::ResourceClient$exec()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="resourcer" data-topic="ResourceClient" data-id="getConnection">}\href{../../resourcer/html/ResourceClient.html#method-getConnection}{\code{resourcer::ResourceClient$getConnection()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="resourcer" data-topic="ResourceClient" data-id="getResource">}\href{../../resourcer/html/ResourceClient.html#method-getResource}{\code{resourcer::ResourceClient$getResource()}}\out{</span>}
 }
 \out{</details>}
@@ -43,7 +43,7 @@ Resource client that connects to a SQL database supported by DBI
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Creates a SQLResourceClient from a resource.
+Creates a SQLFlexClient from a resource.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SQLFlexClient$new(resource, dbi.connector = NULL)}\if{html}{\out{</div>}}
 }
@@ -59,6 +59,19 @@ Creates a SQLResourceClient from a resource.
 }
 \subsection{Returns}{
 The SQLResourceClient object.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-getConnection"></a>}}
+\if{latex}{\out{\hypertarget{method-getConnection}{}}}
+\subsection{Method \code{getConnection()}}{
+Get or create the DBI connection object that will access the resource.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SQLFlexClient$getConnection()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The DBI connection object.
 }
 }
 \if{html}{\out{<hr>}}
