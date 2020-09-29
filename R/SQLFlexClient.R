@@ -77,11 +77,36 @@ SQLFlexClient <- R6::R6Class(
 loadQuery <- function(x,sqltext, ...){
   sqltext <- dsSwissKnife:::.decode.arg(sqltext)
   if ("SQLFlexClient" %in% class(x)) {
-    return(x$readQuery(sqltext, ...))
+    out <- x$readQuery(sqltext, ...)
+    # transform characters and dates into factors (dsBaseClient doesn't like dates, dsSwissKnifeClient::dssShowFactors likes factors)
+    out <- as.data.frame(sapply(out, function(y){
+      if(length(intersect(class(y) , c('character', 'Date', 'POSIXct', 'POSIXlt', 'POSIXt'))) >0 ){
+        return(factor(y))
+      } else {
+        return(y)
+      }
+    }, simplify = FALSE))
   } else {
     stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
   }
 }
 
 
+#' @title List all tables accessible through a SQLFlex object
+#' @param x a SQLFlexClient object
+#'@export
+showTables <- function(x){
+  loadQuery(x, 'select table_schema, table_name, table_type, table_owner from information_schema.tables')
+}
 
+
+#' @title List all columns of a table
+#' @table_name name of the table
+#' @schema_name name of the table schema
+#' @param x a SQLFlexClient object
+#'@export
+showColumns <- function(x, table_name, schema_name = 'public'){
+  sql <- paste0("select column_name, data_type from information_schema.columns where schema_name = '",
+                  schema_name, "' and table_name = '", table_name, "'")
+  loadQuery(x, sql)
+}

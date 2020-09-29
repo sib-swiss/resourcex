@@ -12,6 +12,9 @@ License: LGPL (>= 2.1)
 LazyData: true
 AssignMethods:
     loadQuery
+AggregateMethods:
+    showTables,
+    showColumns
 Depends:
     resourcer,
     dsSwissKnife

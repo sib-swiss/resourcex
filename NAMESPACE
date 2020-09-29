@@ -3,6 +3,8 @@
 export(SQLFlexClient)
 export(SQLFlexResolver)
 export(loadQuery)
+export(showColumns)
+export(showTables)
 import(R6)
 import(dsSwissKnife)
 import(resourcer)
