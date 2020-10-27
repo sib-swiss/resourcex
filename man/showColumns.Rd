@@ -4,10 +4,12 @@
 \alias{showColumns}
 \title{List all columns of a table}
 \usage{
-showColumns(x, table_name, schema_name = "public")
+showColumns(x, table_name)
 }
 \arguments{
 \item{x}{a SQLFlexClient object}
+
+\item{table_name}{name of the table (maybe qualified with schema name)}
 }
 \description{
 List all columns of a table

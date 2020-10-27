@@ -14,10 +14,12 @@ AssignMethods:
     loadQuery
 AggregateMethods:
     showTables,
-    showColumns
+    showColumns,
+    viewSize
 Depends:
     resourcer,
-    dsSwissKnife
+    dsSwissKnife,
+    magrittr
 Suggests: 
     testthat,
     knitr,

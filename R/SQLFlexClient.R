@@ -95,18 +95,60 @@ loadQuery <- function(x,sqltext, ...){
 #' @title List all tables accessible through a SQLFlex object
 #' @param x a SQLFlexClient object
 #'@export
+
 showTables <- function(x){
-  loadQuery(x, 'select table_schema, table_name, table_type, table_owner from information_schema.tables')
+ out <- loadQuery(x, "select case table_schema 
+                             when 'public' then table_name 
+                             else table_schema || '.' || table_name
+                             end as table_name, table_type, 
+                      pg_size_pretty(pg_table_size(table_schema || '.' || table_name )) as size
+                      from information_schema.tables 
+                      where table_schema not in ('information_schema', 'pg_catalog') 
+                      order by 1 ")
+ out[out$table_type == 'VIEW', 'size'] <- 'Use dsrEstimateObjectSize'
+ out
+ 
 }
 
-
 #' @title List all columns of a table
-#' @table_name name of the table
-#' @schema_name name of the table schema
+#' @param table_name name of the table (maybe qualified with schema name)
 #' @param x a SQLFlexClient object
 #'@export
-showColumns <- function(x, table_name, schema_name = 'public'){
-  sql <- paste0("select column_name, data_type from information_schema.columns where schema_name = '",
+showColumns <- function(x, table_name){
+  schema_name <- 'public' # default
+  if(grepl('\\.', table_name)){
+    spl <- strsplit(table_name, '\\.')[[1]]
+    schema_name <- spl[1]
+    table_name <- spl[2]
+  }
+  sql <- paste0("select column_name, data_type from information_schema.columns where table_schema = '",
                   schema_name, "' and table_name = '", table_name, "'")
   loadQuery(x, sql)
 }
+
+#' @title Estimate the memory size of one or more views
+#' @param views a character vector, names of the views (or sql queries)
+#' @param db a SQLFlexClient object
+#' @export
+viewSize<- function(db, views){
+  views <- dsSwissKnife:::.decode.arg(views)
+  sapply(views, function(x){
+    y <- x #set default
+    if (!grepl("^\\s*select", x, ignore.case = TRUE)) {
+      y <- paste0("select * from ", x)
+    }
+    sql1 <- paste0("create temporary table xx_tmp as ", y)
+    loadQuery(db, sql1)
+    sql2 <- "select pg_size_pretty(pg_table_size('xx_tmp')) as size"
+    out <- loadQuery(db, sql2)
+    loadQuery(db, 'drop table xx_tmp')
+    lbl <- gsub('\\n',' ',x) # no carriage returns for the label
+    if (nchar(lbl) > 32){
+      lbl <- paste0(substr(lbl,1,32),'...')
+    }
+    out <- cbind(data.frame(object = lbl), out)
+    out
+  },simplify = FALSE) %>% Reduce(rbind,.) 
+  
+}
+
