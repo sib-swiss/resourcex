@@ -130,23 +130,53 @@ showColumns <- function(x, table_name){
 #' @param views a character vector, names of the views (or sql queries)
 #' @param db a SQLFlexClient object
 #' @export
-viewSize<- function(db, views){
+viewSize<- function(db, views, rowsamp = NULL){
+
   views <- dsSwissKnife:::.decode.arg(views)
   sapply(views, function(x){
     y <- x #set default
     if (!grepl("^\\s*select", x, ignore.case = TRUE)) {
       y <- paste0("select * from ", x)
     }
-    sql1 <- paste0("create temporary table xx_tmp as ", y)
-    loadQuery(db, sql1)
-    sql2 <- "select pg_size_pretty(pg_table_size('xx_tmp')) as size"
-    out <- loadQuery(db, sql2)
-    loadQuery(db, 'drop table xx_tmp')
-    lbl <- gsub('\\n',' ',x) # no carriage returns for the label
+###########################################################    
+#   no more of this temp table nonsense:                  #
+###########################################################    
+#    sql1 <- paste0("create temporary table xx_tmp as ", y)
+#    loadQuery(db, sql1)
+#    sql2 <- "select pg_size_pretty(pg_table_size('xx_tmp')) as size"
+#    db_size <- loadQuery(db, sql2)
+#    loadQuery(db, 'drop table xx_tmp')
+########################################################################  
+  lbl <- gsub('\\n',' ',x) # no carriage returns for the label
     if (nchar(lbl) > 32){
       lbl <- paste0(substr(lbl,1,32),'...')
     }
-    out <- cbind(data.frame(object = lbl), out)
+  
+    do_code <- paste0("DO 
+     $$DECLARE
+      rec record;
+      rows integer;
+      query varchar(4000);
+     BEGIN
+        query := $abc$",y,"$abc$;
+        FOR rec IN EXECUTE 'EXPLAIN ANALYZE ' || query LOOP
+          rows := substring(rec.\"QUERY PLAN\" FROM 'actual time.*rows=([[:digit:]]+)');
+          EXIT WHEN rows IS NOT NULL;
+        END LOOP;
+        RAISE EXCEPTION USING MESSAGE=rows;
+     END$$;")
+    r_size <- tryCatch(loadQuery(db, do_code), error = function(e){
+      tot_nrows <- strsplit(e$message, 'ERROR:|\\n')[[1]][2] %>% as.numeric()
+      if(is.null(rowsamp)){
+        rowsamp <- round(tot_nrows / 20) # 5% sample by default
+      }
+      sql3 <- paste0('select * from (',y,') xx limit ', rowsamp)
+      tmp <- loadQuery(db, sql3)
+      format(object.size(tmp) * tot_nrows/rowsamp, units='auto', standard = 'SI')
+    } )
+    
+    
+    out <- data.frame(object = lbl,  'estimated.size' = r_size)
     out
   },simplify = FALSE) %>% Reduce(rbind,.) 
   
