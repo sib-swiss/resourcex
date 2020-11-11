@@ -101,13 +101,12 @@ showTables <- function(x){
                              when 'public' then table_name 
                              else table_schema || '.' || table_name
                              end as table_name, table_type, 
-                      pg_size_pretty(pg_table_size(table_schema || '.' || table_name )) as size
+                      pg_size_pretty(pg_table_size(table_schema || '.' || table_name )) as size_in_db
                       from information_schema.tables 
                       where table_schema not in ('information_schema', 'pg_catalog') 
                       order by 1 ")
- out[out$table_type == 'VIEW', 'size'] <- 'Use dsrEstimateObjectSize'
- out
  
+ out
 }
 
 #' @title List all columns of a table
@@ -130,7 +129,7 @@ showColumns <- function(x, table_name){
 #' @param views a character vector, names of the views (or sql queries)
 #' @param db a SQLFlexClient object
 #' @export
-viewSize<- function(db, views, rowsamp = NULL){
+viewSize<- function(db, views, rowsamp = 5){
 
   views <- dsSwissKnife:::.decode.arg(views)
   sapply(views, function(x){
@@ -167,10 +166,9 @@ viewSize<- function(db, views, rowsamp = NULL){
      END$$;")
     r_size <- tryCatch(loadQuery(db, do_code), error = function(e){
       tot_nrows <- strsplit(e$message, 'ERROR:|\\n')[[1]][2] %>% as.numeric()
-      if(is.null(rowsamp)){
-        rowsamp <- round(tot_nrows / 20) # 5% sample by default
-      }
-      sql3 <- paste0('select * from (',y,') xx limit ', rowsamp)
+
+      rws <- round(tot_nrows * rowsamp/100)
+      sql3 <- paste0('select * from (',y,') xx limit ', rws)
       tmp <- loadQuery(db, sql3)
       format(object.size(tmp) * tot_nrows/rowsamp, units='auto', standard = 'SI')
     } )
