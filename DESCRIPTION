@@ -21,22 +21,7 @@ Depends:
     dsSwissKnife,
     magrittr
 Suggests: 
-    testthat,
-    knitr,
-    haven,
-    readr,
-    readxl,
-    ssh,
-    sys,
-    mongolite,
-    dplyr,
-    dbplyr,
     DBI,
-    RMariaDB,
-    RPostgres,
-    sparklyr,
-    RPresto,
-    nodbi,
-    rmarkdown
+    RPostgres
 RoxygenNote: 7.1.1
 Encoding: UTF-8
