@@ -89,6 +89,7 @@ loadQuery <- function(x,sqltext, ...){
   } else {
     stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
   }
+  out
 }
 
 

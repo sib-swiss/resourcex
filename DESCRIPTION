@@ -6,7 +6,7 @@ Authors@R:
     c(person(given = "Iulian",
              family = "Dragan",
              role = c("aut", "cre"),
-             email = "yannick.marcon@obiba.org"))
+             email = "iulian.dragan@sib.swiss"))
 Description: Extension to Obiba's resourcer package. Adds free query SQL client. 
 License: LGPL (>= 2.1)
 LazyData: true
