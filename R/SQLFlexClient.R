@@ -78,6 +78,7 @@ loadQuery <- function(x,sqltext, ...){
   sqltext <- dsSwissKnife:::.decode.arg(sqltext)
   if ("SQLFlexClient" %in% class(x)) {
     out <- x$readQuery(sqltext, ...)
+    return(out)
     # transform characters and dates into factors (dsBaseClient doesn't like dates, dsSwissKnifeClient::dssShowFactors likes factors)
     out <- as.data.frame(sapply(out, function(y){
       if(length(intersect(class(y) , c('character', 'Date', 'POSIXct', 'POSIXlt', 'POSIXt'))) >0 ){
