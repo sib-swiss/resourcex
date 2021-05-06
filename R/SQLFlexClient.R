@@ -43,10 +43,10 @@ SQLFlexClient <- R6::R6Class(
     #' @param sqltext a character, the query text
     #' @param ... Additional parameters to dbGetQuery.
     #' @return A data.frame 
-    readQuery = function(sqltext) {
+    readQuery = function(sqltext, params = NULL) {
       conn <- self$getConnection()
 
-      DBI::dbGetQuery(conn, sqltext)
+      DBI::dbGetQuery(conn, sqltext, params = params)
     },
     
   
@@ -74,10 +74,10 @@ SQLFlexClient <- R6::R6Class(
 #' @return A data.frame 
 #' @import dsSwissKnife
 #'@export
-loadQuery <- function(x,sqltext,...){
+loadQuery <- function(x,sqltext, params = NULL){
   sqltext <- dsSwissKnife:::.decode.arg(sqltext)
   if ("SQLFlexClient" %in% class(x)) {
-    out <- x$readQuery(sqltext)
+    out <- x$readQuery(sqltext, params = params)
     # transform characters and dates into factors (dsBaseClient doesn't like dates, dsSwissKnifeClient::dssShowFactors likes factors)
     out <- as.data.frame(sapply(out, function(y){
       if(length(intersect(class(y) , c('character', 'Date', 'POSIXct', 'POSIXlt', 'POSIXt'))) >0 ){
