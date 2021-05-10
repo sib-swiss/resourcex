@@ -19,9 +19,8 @@ AggregateMethods:
 Depends:
     resourcer,
     dsSwissKnife,
-    magrittr
-Suggests: 
+    magrittr,
     DBI,
-    RPostgres
+    Rpostgres
 RoxygenNote: 7.1.1
 Encoding: UTF-8
