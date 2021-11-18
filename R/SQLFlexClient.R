@@ -107,7 +107,7 @@ showTables <- function(x){
                       where table_schema not in ('information_schema', 'pg_catalog') 
                       order by 1 ")
  out$`number_of_rows` <- unlist(sapply(out$table_name, function(y){
-            loadQuery(x, paste0('select count(1) from ', y ))
+            loadQuery(x, paste0('select count(1)::integer from ', y ))
  }))
  
  out
