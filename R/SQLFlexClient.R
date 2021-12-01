@@ -174,7 +174,7 @@ viewSize<- function(db, views, rowsamp = 5){
       rws <- round(tot_nrows * rowsamp/100)
       sql3 <- paste0('select * from (',y,') xx limit ', rws)
       tmp <- loadQuery(db, sql3)
-      format(object.size(tmp) * tot_nrows/rowsamp, units='auto', standard = 'SI')
+      format(object.size(tmp) * 100/rowsamp, units='auto', standard = 'SI')
     } )
     
     
