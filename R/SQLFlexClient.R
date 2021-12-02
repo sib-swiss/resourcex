@@ -89,7 +89,7 @@ loadQuery <- function(x,sqltext, params = NULL){
   } else {
     stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
   }
-  out
+  out[, .trim_hidden_fields(colnames(out))]
 }
 
 
@@ -183,4 +183,15 @@ viewSize<- function(db, views, rowsamp = 5){
   },simplify = FALSE) %>% Reduce(rbind,.) 
   
 }
+
+
+# helper function to avoid loading useless columns:
+.trim_hidden_fields <- function(cols){
+ 
+  for (r in getOption('hidden.fields.regexes')){
+    cols <- grep(r, cols, value = TRUE, perl = TRUE)
+  }
+  cols
+}
+
 
