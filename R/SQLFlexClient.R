@@ -188,7 +188,7 @@ viewSize<- function(db, views, rowsamp = 5){
 # helper function to avoid loading useless (or disclosing) columns:
 .trim_hidden_fields <- function(cols){
   #first pass:
-  cols <- setdiff(cols, getOption('hidden.fields'))
+
   for (r in getOption('hidden.fields.regexes')){
     cols <- grep(r, cols, value = TRUE, perl = TRUE, invert = TRUE)
   }
