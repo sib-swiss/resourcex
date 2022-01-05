@@ -88,7 +88,7 @@ Execute a query in the database and retrieve the results.
 \describe{
 \item{\code{sqltext}}{a character, the query text}
 
-\item{\code{...}}{Additional parameters to dbGetQuery.}
+\item{\code{params}}{Additional parameters to dbGetQuery.}
 }
 \if{html}{\out{</div>}}
 }

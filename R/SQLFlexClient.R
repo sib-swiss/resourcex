@@ -41,7 +41,7 @@ SQLFlexClient <- R6::R6Class(
     
     #' @description Execute a query in the database and retrieve the results.
     #' @param sqltext a character, the query text
-    #' @param ... Additional parameters to dbGetQuery.
+    #' @param params Additional parameters to dbGetQuery.
     #' @return A data.frame 
     readQuery = function(sqltext, params = NULL) {
       conn <- self$getConnection()
