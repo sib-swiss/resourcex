@@ -74,7 +74,7 @@ SQLFlexClient <- R6::R6Class(
 #' @return A data.frame 
 #' @import dsSwissKnife
 #'@export
-loadQuery <- function(x,sqltext, params = NULL){
+qLoad <- function(x,sqltext, params = NULL){
   sqltext <- dsSwissKnife:::.decode.arg(sqltext)
   if ("SQLFlexClient" %in% class(x)) {
     out <- x$readQuery(sqltext, params = params)
@@ -98,7 +98,7 @@ loadQuery <- function(x,sqltext, params = NULL){
 #'@export
 
 showTables <- function(x){
- out <- loadQuery(x, "select case table_schema 
+ out <- qLoad(x, "select case table_schema 
                              when 'public' then table_name 
                              else table_schema || '.' || table_name
                              end as table_name, table_type, 
@@ -107,7 +107,7 @@ showTables <- function(x){
                       where table_schema not in ('information_schema', 'pg_catalog') 
                       order by 1 ")
  out$`number_of_rows` <- unlist(sapply(out$table_name, function(y){
-            loadQuery(x, paste0('select count(1)::integer from ', y ))
+            qLoad(x, paste0('select count(1)::integer from ', y ))
  }))
  
  out
@@ -126,7 +126,7 @@ showColumns <- function(x, table_name){
   }
   sql <- paste0("select column_name, data_type from information_schema.columns where table_schema = '",
                   schema_name, "' and table_name = '", table_name, "'")
-  loadQuery(x, sql)
+  qLoad(x, sql)
 }
 
 #' @title Estimate the memory size of one or more views
@@ -145,10 +145,10 @@ viewSize<- function(db, views, rowsamp = 5){
 #   no more of this temp table nonsense:                  #
 ###########################################################    
 #    sql1 <- paste0("create temporary table xx_tmp as ", y)
-#    loadQuery(db, sql1)
+#    qLoad(db, sql1)
 #    sql2 <- "select pg_size_pretty(pg_table_size('xx_tmp')) as size"
-#    db_size <- loadQuery(db, sql2)
-#    loadQuery(db, 'drop table xx_tmp')
+#    db_size <- qLoad(db, sql2)
+#    qLoad(db, 'drop table xx_tmp')
 ########################################################################  
   lbl <- gsub('\\n',' ',x) # no carriage returns for the label
     if (nchar(lbl) > 32){
@@ -168,12 +168,12 @@ viewSize<- function(db, views, rowsamp = 5){
         END LOOP;
         RAISE EXCEPTION USING MESSAGE=rows;
      END$$;")
-    r_size <- tryCatch(loadQuery(db, do_code), error = function(e){
+    r_size <- tryCatch(qLoad(db, do_code), error = function(e){
       tot_nrows <- strsplit(e$message, 'ERROR:|\\n')[[1]][2] %>% as.numeric()
 
       rws <- round(tot_nrows * rowsamp/100)
       sql3 <- paste0('select * from (',y,') xx limit ', rws)
-      tmp <- loadQuery(db, sql3)
+      tmp <- qLoad(db, sql3)
       format(object.size(tmp) * 100/rowsamp, units='auto', standard = 'SI')
     } )
     
@@ -193,6 +193,54 @@ viewSize<- function(db, views, rowsamp = 5){
     cols <- grep(r, cols, value = TRUE, perl = TRUE, invert = TRUE)
   }
   cols
+}
+
+#' wrapper for qLoad, takes care of some parsing  
+#' @import dsSwissKnife
+#'@export
+loadQuery <- function(x,table_name, cols, where_clause, params = NULL){
+  cols <- dsSwissKnife:::.decode.arg(cols)
+  where_clause <- dsSwissKnife:::.decode.arg(where_clause)
+  # first check the table name
+    # take care of the schema.table bother:
+  qualified <- strsplit(table_name, '.', fixed = TRUE)[[1]]
+  if(length(qualified) == 1){
+    table_name <- paste0('public.', table_name)
+  }
+  # must be present in the db: 
+  tbls  <- showTables(x)
+  table_name <- intersect(paste(tbls$schema_name, tbls$table_name, sep = '.'), table_name)
+  if(length(table_name) != 1){   # exactly one 
+     stop(paste0('Table ', table_name,  " doesn't exist."))
+  }  
+  # ok, it's there, no, we want the list of columns exactly as in the table, no functions or any other funny business:
+  # first get rid of accidental spaces:
+  cols <- gsub('\\s*', '', cols)
+  if(length(cols) > 1 || length(cols) == 1 && cols != '*' ){
+    cols_in <- showColumns(x,table_name)$column_name
+    retcols <- intersect(tolower(cols), c(cols_in, '*'))
+  }
+  if (cols == '*'){
+    retcols <- '*'
+  }
+  if (length(retcols) == 0 ){
+    stop('Only column names are permitted.')
+  }
+  # sanitize a bit the where clause:
+  where_clause <- tolower(where_clause)
+  offenders <- ';|group by|drop|delete|trunc'
+  test_injection <- strsplit(where_clause, offenders, fixed = TRUE)[[1]]
+  if(length(test_injection) > 1){
+    stop('This looks like a sql injection attempt. Not executing.')
+  }
+  # ok, done.
+  sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name)
+  out <- qLoad(x, sqltext, params)
+  if(!.dsBase_isValidDSS(out)){
+    out <- out[0,]  # nothing if less than 5 rows (normally)
+  }
+  out
+  
 }
 
 

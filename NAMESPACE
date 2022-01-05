@@ -3,6 +3,7 @@
 export(SQLFlexClient)
 export(SQLFlexResolver)
 export(loadQuery)
+export(qLoad)
 export(showColumns)
 export(showTables)
 export(viewSize)

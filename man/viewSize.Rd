@@ -4,7 +4,7 @@
 \alias{viewSize}
 \title{Estimate the memory size of one or more views}
 \usage{
-viewSize(db, views)
+viewSize(db, views, rowsamp = 5)
 }
 \arguments{
 \item{db}{a SQLFlexClient object}

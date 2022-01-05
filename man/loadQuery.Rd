@@ -2,20 +2,10 @@
 % Please edit documentation in R/SQLFlexClient.R
 \name{loadQuery}
 \alias{loadQuery}
-\title{Load the result of a query from a database}
+\title{wrapper for qLoad, takes care of some parsing}
 \usage{
-loadQuery(x, sqltext, ...)
-}
-\arguments{
-\item{x}{a SQLFlexClient object}
-
-\item{sqltext}{a character, the query text}
-
-\item{...}{Additional parameters to dbGetQuery.}
-}
-\value{
-A data.frame
+loadQuery(x, table_name, cols, where_clause, params = NULL)
 }
 \description{
-Call the readQuery method of a SQLFlexClient object and retrieve the results.
+wrapper for qLoad, takes care of some parsing
 }

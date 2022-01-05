@@ -80,7 +80,7 @@ The DBI connection object.
 \subsection{Method \code{readQuery()}}{
 Execute a query in the database and retrieve the results.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SQLFlexClient$readQuery(sqltext, ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SQLFlexClient$readQuery(sqltext, params = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
