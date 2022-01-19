@@ -198,7 +198,7 @@ viewSize<- function(db, views, rowsamp = 5){
 #' wrapper for qLoad, takes care of some parsing  
 #' @import dsSwissKnife
 #'@export
-loadQuery <- function(x,table_name, cols, where_clause, params = NULL){
+loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NULL){
   cols <- dsSwissKnife:::.decode.arg(cols)
   where_clause <- dsSwissKnife:::.decode.arg(where_clause)
   # first check the table name
@@ -227,14 +227,17 @@ loadQuery <- function(x,table_name, cols, where_clause, params = NULL){
     stop('Only column names are permitted.')
   }
   # sanitize a bit the where clause:
-  where_clause <- tolower(where_clause)
-  offenders <- ';|group by|drop|delete|trunc'
-  test_injection <- strsplit(where_clause, offenders, fixed = TRUE)[[1]]
-  if(length(test_injection) > 1){
-    stop('This looks like a sql injection attempt. Not executing.')
+  if(!is.null(where_clause)){
+    where_clause <- tolower(where_clause)
+    offenders <- ';|group by|drop|delete|trunc'
+    test_injection <- strsplit(where_clause, offenders, fixed = TRUE)[[1]]
+    if(length(test_injection) > 1){
+      stop('This looks like a sql injection attempt. Not executing.')
+    }
   }
   # ok, done.
-  sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name)
+  sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name, ' where ', where_clause)
+  
   out <- qLoad(x, sqltext, params)
   if(!.dsBase_isValidDSS(out)){
     out <- out[0,]  # nothing if less than 5 rows (normally)
