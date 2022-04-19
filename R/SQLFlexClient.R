@@ -241,9 +241,9 @@ loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NU
   sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name, ' where ', where_clause)
   
   out <- qLoad(x, sqltext, params)
-  if(!.dsBase_isValidDSS(out)){
-    out <- out[0,]  # nothing if less than 5 rows (normally)
-  }
+#  if(!.dsBase_isValidDSS(out)){
+#    out <- out[0,]  # nothing if less than 5 rows (normally)
+#  }
   out
   
 }
