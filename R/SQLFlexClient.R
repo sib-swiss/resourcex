@@ -234,6 +234,8 @@ loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NU
     if(length(test_injection) > 1){
       stop('This looks like a sql injection attempt. Not executing.')
     }
+  } else {
+    where_clause = '1=1'
   }
   # ok, done.
   sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name, ' where ', where_clause)
