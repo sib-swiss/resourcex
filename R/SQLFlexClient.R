@@ -203,13 +203,13 @@ loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NU
   where_clause <- dsSwissKnife:::.decode.arg(where_clause)
   # first check the table name
     # take care of the schema.table bother:
-  qualified <- strsplit(table_name, '.', fixed = TRUE)[[1]]
-  if(length(qualified) == 1){
-    table_name <- paste0('public.', table_name)
-  }
+#  qualified <- strsplit(table_name, '.', fixed = TRUE)[[1]]
+#  if(length(qualified) == 1){
+#    table_name <- paste0('public.', table_name)
+#  }
   # must be present in the db: 
   tbls  <- showTables(x)
-  table_name <- intersect(paste(tbls$schema_name, tbls$table_name, sep = '.'), table_name)
+  table_name <- intersect(tbls$table_name, table_name)
   if(length(table_name) != 1){   # exactly one 
      stop(paste0('Table ', table_name,  " doesn't exist."))
   }  
