@@ -89,7 +89,7 @@ qLoad <- function(x,sqltext, params = NULL){
   } else {
     stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
   }
-  out[, .trim_hidden_fields(colnames(out))]
+  out[, .trim_hidden_fields(colnames(out)),drop=FALSE]
 }
 
 
