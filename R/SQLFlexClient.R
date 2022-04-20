@@ -218,13 +218,13 @@ loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NU
   cols <- gsub('\\s*', '', cols)
   if(length(cols) > 1 || length(cols) == 1 && cols != '*' ){
     cols_in <- showColumns(x,table_name)$column_name
-    retcols <- intersect(tolower(cols), c(cols_in, '*'))
+    retcols <- intersect(tolower(levels(cols)), c(cols_in, '*'))
   }
   if (cols == '*'){
     retcols <- '*'
   }
   if (length(retcols) == 0 ){
-    stop('Only column names are permitted.')
+    stop(paste0('Only column names are permitted.', levels(cols)))
   }
   # sanitize a bit the where clause:
   if(!is.null(where_clause)){
