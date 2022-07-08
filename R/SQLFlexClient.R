@@ -45,8 +45,30 @@ SQLFlexClient <- R6::R6Class(
     #' @return A data.frame 
     readQuery = function(sqltext, params = NULL) {
       conn <- self$getConnection()
+#####
+     # DBI::dbGetQuery(conn, sqltext, params = params)
+##### 
+      ### iulian:
+      res <- dbSendQuery(conn, sqltext, params = params)
+      tps <- dbColumnInfo(res) # get the column types
+      tps <- tps[grepl('json', tps$type, fixed = TRUE), 'name'] # look for the names of json columns
+      if(length(tps) ==0 ){ # we're done here, no json
+        return(dbFetch(res))
+      }
+      ## we have json, fetch some rows at the time, transform and glue:
+      while (!dbHasCompleted(rs)) {
+        chunk <- dbFetch(rs, 1000)
+        for(cname in tps){ # maybe more than one column
+          indx <- which(colnames(chunk) == cname) # index of the column to know where to paste the transformed json
+          x <- lapply(chunk[,cname],jsonlite::fromJSON) # transform json to list of lists
+          patch <- Reduce(rbind, lapply(x, as.data.frame)) #  reduce the above to a dataframe
+          chunk <- cbind(chunk[,1:indx-1], patch, chunk[,(indx+1):length(colnames(chunk))]) # replace the json col with the patch
+        }
+        result <- tryCatch(rbind(result,chunk), error = function(e) if(grepl('not found', e)) chunk) # error handler for the first time
+        
+      }
+      return(result)  
 
-      DBI::dbGetQuery(conn, sqltext, params = params)
     },
     
   
