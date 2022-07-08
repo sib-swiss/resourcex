@@ -49,15 +49,19 @@ SQLFlexClient <- R6::R6Class(
      # DBI::dbGetQuery(conn, sqltext, params = params)
 ##### 
       ### iulian:
-      res <- dbSendQuery(conn, sqltext, params = params)
-      tps <- dbColumnInfo(res) # get the column types
-      tps <- tps[grepl('json', tps$type, fixed = TRUE), 'name'] # look for the names of json columns
-      if(length(tps) ==0 ){ # we're done here, no json
-        return(dbFetch(res))
+
+      res <- RPostgres::dbSendQuery(conn, sqltext, params = params)
+      tps <- RPostgres::dbColumnInfo(res) # get the column types
+
+      tps <- tps[grepl('json', tps$.typname, fixed = TRUE), 'name'] # look for the names of json columns
+
+      if(length(tps) == 0 ){ # we're done here, no json
+        return(RPostgres::dbFetch(res))
       }
       ## we have json, fetch some rows at the time, transform and glue:
-      while (!dbHasCompleted(rs)) {
-        chunk <- dbFetch(rs, 1000)
+      while (!RPostgres::dbHasCompleted(res)) {
+        chunk <- RPostgres::dbFetch(res, 1000)
+
         for(cname in tps){ # maybe more than one column
           indx <- which(colnames(chunk) == cname) # index of the column to know where to paste the transformed json
           x <- lapply(chunk[,cname], jsonlite::fromJSON) # transform json to list of lists
@@ -65,7 +69,16 @@ SQLFlexClient <- R6::R6Class(
           patch <- as.data.frame(sapply(patch,  function(x){
            tryCatch(as.numeric(x), warning = function(w) if(grepl('coercion', w)) x)
           }, simplify = FALSE)) # transform to numeric everything we can 
-          chunk <- cbind(chunk[,1:indx-1], patch, chunk[,(indx+1):length(colnames(chunk))]) # replace the json col with the patch
+          # replace the json col with the patch:
+          if(indx > 1){
+            temp <- cbind(chunk[,1:indx-1], patch)
+          } else {
+            temp <- patch
+          }
+          if(length(colnames(chunk)) > indx){
+            temp <- cbind(temp, chunk[,(indx+1):length(colnames(chunk))])
+          }
+          chunk <- temp 
         }
         result <- tryCatch(rbind(result,chunk), error = function(e) if(grepl('not found', e)) chunk) # error handler for the first time
         
