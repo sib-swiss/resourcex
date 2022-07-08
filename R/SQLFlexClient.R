@@ -60,8 +60,11 @@ SQLFlexClient <- R6::R6Class(
         chunk <- dbFetch(rs, 1000)
         for(cname in tps){ # maybe more than one column
           indx <- which(colnames(chunk) == cname) # index of the column to know where to paste the transformed json
-          x <- lapply(chunk[,cname],jsonlite::fromJSON) # transform json to list of lists
+          x <- lapply(chunk[,cname],function(x)jsonlite::fromJSON) # transform json to list of lists
           patch <- Reduce(rbind, lapply(x, as.data.frame)) #  reduce the above to a dataframe
+          patch <- as.data.frame(sapply(patch,  function(x){
+           tryCatch(as.numeric(x), warning = function(w) if(grepl('coercion', w)) x)
+          }, simplify = FALSE)) # transform to numeric everything we can 
           chunk <- cbind(chunk[,1:indx-1], patch, chunk[,(indx+1):length(colnames(chunk))]) # replace the json col with the patch
         }
         result <- tryCatch(rbind(result,chunk), error = function(e) if(grepl('not found', e)) chunk) # error handler for the first time
