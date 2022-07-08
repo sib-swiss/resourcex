@@ -65,6 +65,8 @@ SQLFlexClient <- R6::R6Class(
         for(cname in tps){ # maybe more than one column
           indx <- which(colnames(chunk) == cname) # index of the column to know where to paste the transformed json
           x <- lapply(chunk[,cname], jsonlite::fromJSON) # transform json to list of lists
+         # x <- jsonlite::fromJSON(chunk[,cname])
+          #patch <-x
           patch <- Reduce(rbind, lapply(x, as.data.frame)) #  reduce the above to a dataframe
           patch <- as.data.frame(sapply(patch,  function(x){
            tryCatch(as.numeric(x), warning = function(w) if(grepl('coercion', w)) x)
