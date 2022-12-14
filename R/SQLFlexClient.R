@@ -54,37 +54,40 @@ SQLFlexClient <- R6::R6Class(
       tps <- RPostgres::dbColumnInfo(res) # get the column types
 
       tps <- tps[grepl('json', tps$.typname, fixed = TRUE), 'name'] # look for the names of json columns
-
-      if(length(tps) == 0 ){ # we're done here, no json
-        return(RPostgres::dbFetch(res))
-      }
-      ## we have json, fetch some rows at the time, transform and glue:
-      while (!RPostgres::dbHasCompleted(res)) {
-        chunk <- RPostgres::dbFetch(res, 1000)
-
-        for(cname in tps){ # maybe more than one column
-          indx <- which(colnames(chunk) == cname) # index of the column to know where to paste the transformed json
-          x <- lapply(chunk[,cname], jsonlite::fromJSON) # transform json to list of lists
-         # x <- jsonlite::fromJSON(chunk[,cname])
-          #patch <-x
-          patch <- Reduce(rbind, lapply(x, as.data.frame)) #  reduce the above to a dataframe
-          patch <- as.data.frame(sapply(patch,  function(x){
-           tryCatch(as.numeric(x), warning = function(w) if(grepl('coercion', w)) x)
-          }, simplify = FALSE)) # transform to numeric everything we can 
-          # replace the json col with the patch:
-          if(indx > 1){
-            temp <- cbind(chunk[,1:indx-1], patch)
-          } else {
-            temp <- patch
-          }
-          if(length(colnames(chunk)) > indx){
-            temp <- cbind(temp, chunk[,(indx+1):length(colnames(chunk))])
-          }
-          chunk <- temp 
+      result <- NULL
+      if(length(tps) == 0 ){ # no json
+        while (!RPostgres::dbHasCompleted(res)){
+          chunk <- RPostgres::dbFetch(res, 1e+07) # fetch 10 million at a time
+          result <- rbind(result,chunk)
         }
-        result <- tryCatch(rbind(result,chunk), error = function(e) if(grepl('not found', e)) chunk) # error handler for the first time
-        
+      } else { ## we have json, fetch some rows at the time, transform and glue:
+      
+        while (!RPostgres::dbHasCompleted(res)) {
+          chunk <- RPostgres::dbFetch(res, 1000)
+
+          for(cname in tps){ # maybe more than one column
+            indx <- which(colnames(chunk) == cname) # index of the column to know where to paste the transformed json
+            x <- lapply(chunk[,cname], jsonlite::fromJSON) # transform json to list of lists
+          # x <- jsonlite::fromJSON(chunk[,cname])
+            #patch <-x
+            patch <- Reduce(rbind, lapply(x, as.data.frame)) #  reduce the above to a dataframe
+            patch <- as.data.frame(sapply(patch,  function(x){
+            tryCatch(as.numeric(x), warning = function(w) if(grepl('coercion', w)) x)
+            }, simplify = FALSE)) # transform to numeric everything we can 
+            # replace the json col with the patch:
+            if(indx > 1){
+              temp <- cbind(chunk[,1:indx-1], patch)
+            } else {
+              temp <- patch
+            }
+            if(length(colnames(chunk)) > indx){
+              temp <- cbind(temp, chunk[,(indx+1):length(colnames(chunk))])
+            }
+            chunk <- temp 
+          }
+          result <- rbind(result,chunk)
       }
+    }
       return(result)  
 
     },
@@ -129,7 +132,7 @@ qLoad <- function(x,sqltext, params = NULL){
   } else {
     stop("Trying to read data from  an object that is not a SQLFlexClient: ", paste0(class(x), collapse = ", "))
   }
-  out[, .trim_hidden_fields(colnames(out)),drop=FALSE]
+  out
 }
 
 
@@ -225,20 +228,20 @@ viewSize<- function(db, views, rowsamp = 5){
 }
 
 
-# helper function to avoid loading useless (or disclosing) columns:
-.trim_hidden_fields <- function(cols){
+## helper function to avoid loading useless (or disclosing) columns:
+#.trim_hidden_fields <- function(cols){
   #first pass:
 
-  for (r in getOption('hidden.fields.regexes')){
-    cols <- grep(r, cols, value = TRUE, perl = TRUE, invert = TRUE)
-  }
-  cols
-}
+#  for (r in getOption('hidden.fields.regexes')){
+#    cols <- grep(r, cols, value = TRUE, perl = TRUE, invert = TRUE)
+#  }
+#  cols
+#}
 
 #' wrapper for qLoad, takes care of some parsing  
 #' @import dsSwissKnife
 #'@export
-loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NULL){
+loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NULL, limit = NULL){
   cols <- dsSwissKnife:::.decode.arg(cols)
   where_clause <- dsSwissKnife:::.decode.arg(where_clause)
   # first check the table name
@@ -279,11 +282,11 @@ loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NU
   }
   # ok, done.
   sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name, ' where ', where_clause)
-  
+  if(!is.null(limit){
+    sqltext <- paste0(sqltext, ' limit ', limit)
+  })
   out <- qLoad(x, sqltext, params)
-#  if(!.dsBase_isValidDSS(out)){
-#    out <- out[0,]  # nothing if less than 5 rows (normally)
-#  }
+
   out
   
 }
