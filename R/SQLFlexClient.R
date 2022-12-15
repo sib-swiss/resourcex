@@ -141,6 +141,9 @@ qLoad <- function(x,sqltext, params = NULL){
 #'@export
 
 showTables <- function(x){
+ if(exists('.showTables', envir = .GlobalEnv)){
+   return(.showTables)
+ }
  out <- qLoad(x, "select case table_schema 
                              when 'public' then table_name 
                              else table_schema || '.' || table_name
@@ -152,7 +155,7 @@ showTables <- function(x){
  out$`number_of_rows` <- unlist(sapply(out$table_name, function(y){
             qLoad(x, paste0('select count(1)::integer from ', y ))
  }))
- 
+ assign('.showTables', out, envir = .GlobalEnv)
  out
 }
 
@@ -282,9 +285,9 @@ loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NU
   }
   # ok, done.
   sqltext <- paste0('select ', paste(retcols, collapse = ', '), ' from ', table_name, ' where ', where_clause)
-  if(!is.null(limit){
+  if(!is.null(limit)){
     sqltext <- paste0(sqltext, ' limit ', limit)
-  })
+  }
   out <- qLoad(x, sqltext, params)
 
   out
