@@ -59,11 +59,13 @@ SQLFlexClient <- R6::R6Class(
       if(length(tps) == 0 ){ # no json
         result <- list()
         while (!RPostgres::dbHasCompleted(res)){
-          # chunk <- RPostgres::dbFetch(res, 1e+07) # fetch 10 million at a time
-          # result <- rbind(result,chunk)
-          result[[length(result) + 1]] <- RPostgres::dbFetch(res, 1e+08)
+          chunk <- RPostgres::dbFetch(res, 1e+07) # fetch 10 million at a time
+          result <- rbind(result,chunk)
+          # try to fix memory problems on large datasets:
+          gc(FALSE, TRUE, TRUE)
+          #result[[length(result) + 1]] <- RPostgres::dbFetch(res, 1e+07)
         }
-        result <- Reduce(rbind, result)
+        # result <- Reduce(rbind, result)
         
       } else { ## we have json, fetch some rows at the time, transform and glue:
         result <- NULL
@@ -93,6 +95,7 @@ SQLFlexClient <- R6::R6Class(
           result <- rbind(result,chunk)
       }
       }
+      RPostgres::dbClearResult(res)
       return(result)  
 
     },
