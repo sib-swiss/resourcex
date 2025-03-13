@@ -64,7 +64,7 @@ SQLFlexClient <- R6::R6Class(
           result[[length(result) + 1]] <- RPostgres::dbFetch(res, 1e+07)
         }
         result <- Reduce(rbind, result)
-        
+
       } else { ## we have json, fetch some rows at the time, transform and glue:
         result <- NULL
         while (!RPostgres::dbHasCompleted(res)) {
@@ -93,6 +93,7 @@ SQLFlexClient <- R6::R6Class(
           result <- rbind(result,chunk)
       }
       }
+      RPostgres::dbClearResult(res)
       return(result)  
 
     },
