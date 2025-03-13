@@ -54,14 +54,19 @@ SQLFlexClient <- R6::R6Class(
       tps <- RPostgres::dbColumnInfo(res) # get the column types
 
       tps <- tps[grepl('json', tps$.typname, fixed = TRUE), 'name'] # look for the names of json columns
-      result <- NULL
-      if(length(tps) == 0 ){ # no json
-        while (!RPostgres::dbHasCompleted(res)){
-          chunk <- RPostgres::dbFetch(res, 1e+07) # fetch 10 million at a time
-          result <- rbind(result,chunk)
-        }
-      } else { ## we have json, fetch some rows at the time, transform and glue:
+     # result <- NULL
       
+      if(length(tps) == 0 ){ # no json
+        result <- list()
+        while (!RPostgres::dbHasCompleted(res)){
+          # chunk <- RPostgres::dbFetch(res, 1e+07) # fetch 1 million at a time
+          # result <- rbind(result,chunk)
+          result[[length(result) + 1]] <- RPostgres::dbFetch(res, 1e+07)
+        }
+        result <- Reduce(rbind, result)
+        
+      } else { ## we have json, fetch some rows at the time, transform and glue:
+        result <- NULL
         while (!RPostgres::dbHasCompleted(res)) {
           chunk <- RPostgres::dbFetch(res, 1000)
 
@@ -87,7 +92,7 @@ SQLFlexClient <- R6::R6Class(
           }
           result <- rbind(result,chunk)
       }
-    }
+      }
       return(result)  
 
     },
@@ -244,9 +249,29 @@ viewSize<- function(db, views, rowsamp = 5){
 #' wrapper for qLoad, takes care of some parsing  
 #' @import dsSwissKnife
 #'@export
-loadQuery <- function(x,table_name, cols = '*', where_clause = NULL, params = NULL, limit = NULL){
+loadQuery <- function(x,table_name = NULL, cols = '*', where_clause = NULL, params = NULL, limit = NULL){
+
+  if(is.null(table_name)){ # special case: we want to set parameters in the session
+    params <- dsSwissKnife:::.decode.arg(params)
+    if(is.null(params)){
+      stop('Either table_name or params must be present.')
+    }
+    #params is of the form {parameter_name = parameter_value}
+    return(
+      sapply(names(params), function(p){
+      stmt <- paste0('set ', p, ' = ', params[[p]])
+      qLoad(x, stmt)
+    }))
+    
+  }
+  
+  
+  
+  
   cols <- dsSwissKnife:::.decode.arg(cols)
   where_clause <- dsSwissKnife:::.decode.arg(where_clause)
+  
+  
   # first check the table name
     # take care of the schema.table bother:
 #  qualified <- strsplit(table_name, '.', fixed = TRUE)[[1]]
